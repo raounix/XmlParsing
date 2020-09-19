@@ -1,12 +1,15 @@
 package main
 
 import (
+	"encoding/json"
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/gorilla/mux"
 )
 
 type Profile struct {
@@ -34,6 +37,11 @@ type Profile struct {
 	} `xml:"settings"`
 }
 
+type Person struct {
+	Name       string   `json:"Name"`
+	Parameters []string `json:"parameters"`
+}
+
 func Home(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	if r.Method == http.MethodGet {
@@ -55,7 +63,23 @@ func Home(w http.ResponseWriter, r *http.Request) {
 			Params[key] = value[0]
 
 		}
+		decoder := json.NewDecoder(r.Body)
+		var t Person
 
+		err := decoder.Decode(&t)
+		if err != nil {
+
+			panic(err)
+		}
+		log.Println(t.Parameters)
+
+		var FileName = t.Name + ".xml"
+
+		File, err := os.OpenFile(FileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			log.Fatal(err)
+		}
+		_ = File
 		xmlFile, err := os.Open("test.xml")
 		// if we os.Open returns an error then handle it
 		if err != nil {
@@ -79,7 +103,7 @@ func Home(w http.ResponseWriter, r *http.Request) {
 		// print out the user Type, their name, and their facebook url
 		// as just an example
 		Profile_Length := len(profile.Settings.Param)
-
+		profile.Name = t.Name
 		for key, value := range Params {
 
 			for i := 0; i < Profile_Length; i++ {
@@ -90,13 +114,17 @@ func Home(w http.ResponseWriter, r *http.Request) {
 		}
 		file, _ := xml.MarshalIndent(profile, "", " ")
 
-		_ = ioutil.WriteFile("notes1.xml", file, 0644)
+		_ = ioutil.WriteFile(FileName, file, 0644)
 	}
 
 }
 
 func handleRequests() {
-	http.HandleFunc("/", Home)
+	r := mux.NewRouter()
+
+	r.HandleFunc("/profiles", Home)
+
+	http.Handle("/", r)
 	log.Fatal(http.ListenAndServe(":10000", nil))
 
 }
