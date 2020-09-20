@@ -13,7 +13,7 @@ import (
 )
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// stcruct for give all xml tags for create or modify xml files
+// struct for give all xml tags for create or modify xml files
 type Profile struct {
 	XMLName  xml.Name `xml:"profile"`
 	Text     string   `xml:",chardata"`
@@ -39,7 +39,11 @@ type Profile struct {
 	} `xml:"settings"`
 }
 
-type JsonFile struct {
+type ConfigFile struct { // Struct For Read location files from config.json
+	Location string `json:"location"`
+}
+
+type JsonFile struct { // Struct For Open Json file gived from Post Request
 	Name       string            `json:"Name"`
 	Parameters map[string]string `json:"params"`
 }
@@ -74,9 +78,8 @@ func WritingXML(FileName string, FILE string) {
 		defer File.Close()
 	}
 
-	fmt.Println(FileName)
 	xmlFile, _ := os.Open(FileName)
-	fmt.Println("Successfully Opened test.xml")
+
 	// defer the closing of our xmlFile so that we can parse it later on
 	defer xmlFile.Close()
 
@@ -89,7 +92,6 @@ func WritingXML(FileName string, FILE string) {
 	// xmlFiles content into 'profile' which we defined above
 	xml.Unmarshal(byteValue, &profile)
 
-	fmt.Println(len(profile.Settings.Param))
 	Profile_Length := len(profile.Settings.Param)
 	profile.Name = jsonfile.Name
 	for key, value := range Params {
@@ -108,9 +110,25 @@ func WritingXML(FileName string, FILE string) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Give Location files from config.json
+
+func ConfigLocation() string {
+	configfile, _ := os.Open("config.json")
+	byteconfig, _ := ioutil.ReadAll(configfile)
+	defer configfile.Close()
+	var configstruct ConfigFile
+	json.Unmarshal(byteconfig, &configstruct)
+	return configstruct.Location
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // profile for parsing xml files and give request post in json file  and pass them to WritingXML() function
-func Profile(w http.ResponseWriter, r *http.Request) {
+func Profiles(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
+	Location := ConfigLocation() + "/"
+
 	if r.Method == http.MethodGet {
 
 		// f, err := os.Open("/tmp/out.xml")
@@ -145,13 +163,12 @@ func Profile(w http.ResponseWriter, r *http.Request) {
 		// 	log.Fatal(err)
 		// }
 		// _ = File
+		FileName = Location + FileName
 		if fileExists(FileName) {
 			WritingXML(FileName, FileName)
 		} else {
 			WritingXML("test.xml", FileName)
 		}
-
-		// if we os.Open returns an error then handle it
 
 	}
 
@@ -165,7 +182,7 @@ func Profile(w http.ResponseWriter, r *http.Request) {
 func handleRequests() {
 	r := mux.NewRouter()
 
-	r.HandleFunc("/profiles", Profile)
+	r.HandleFunc("/profiles", Profiles)
 
 	http.Handle("/", r)
 	log.Fatal(http.ListenAndServe(":10000", nil))
