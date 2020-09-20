@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"encoding/xml"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -68,7 +67,7 @@ func fileExists(filename string) bool {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //Write To XML File
-func WritingXML(FileName string, FILE string) {
+func WritingXML(FileName string, FILE string, w http.ResponseWriter) {
 	if FileName == "test.xml" {
 		File, err := os.OpenFile(FILE, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
@@ -105,6 +104,9 @@ func WritingXML(FileName string, FILE string) {
 	file, _ := xml.MarshalIndent(profile, "", " ")
 
 	_ = ioutil.WriteFile(FILE, file, 0644)
+	w.Header().Set("Content-Type", "application/xml")
+	w.Write(file)
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -115,7 +117,6 @@ func WritingXML(FileName string, FILE string) {
 func ConfigLocation() string {
 	configfile, _ := os.Open("config.json")
 	byteconfig, _ := ioutil.ReadAll(configfile)
-	defer configfile.Close()
 	var configstruct ConfigFile
 	json.Unmarshal(byteconfig, &configstruct)
 	return configstruct.Location
@@ -140,7 +141,7 @@ func Profiles(w http.ResponseWriter, r *http.Request) {
 
 	} else if r.Method == http.MethodPost {
 
-		fmt.Fprintf(w, "Post Request")
+		// fmt.Fprintf(w, "Post Request")
 
 		Params = make(map[string]string)
 
@@ -163,11 +164,14 @@ func Profiles(w http.ResponseWriter, r *http.Request) {
 		// 	log.Fatal(err)
 		// }
 		// _ = File
+
 		FileName = Location + FileName
 		if fileExists(FileName) {
-			WritingXML(FileName, FileName)
+			WritingXML(FileName, FileName, w)
+
 		} else {
-			WritingXML("test.xml", FileName)
+			WritingXML("test.xml", FileName, w)
+
 		}
 
 	}
