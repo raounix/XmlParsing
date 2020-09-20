@@ -12,6 +12,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// stcruct for give all xml tags for create or modify xml files
 type Profile struct {
 	XMLName  xml.Name `xml:"profile"`
 	Text     string   `xml:",chardata"`
@@ -42,8 +44,10 @@ type JsonFile struct {
 	Parameters map[string]string `json:"params"`
 }
 
-var jsonfile JsonFile
-var Params map[string]string
+var jsonfile JsonFile        // for opening json file
+var Params map[string]string // give json file parameters for search in xml files
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // If File Exist or No
@@ -55,6 +59,8 @@ func fileExists(filename string) bool {
 	}
 	return !info.IsDir()
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //Write To XML File
@@ -77,15 +83,12 @@ func WritingXML(FileName string, FILE string) {
 	// read our opened xmlFile as a byte array.
 	byteValue, _ := ioutil.ReadAll(xmlFile)
 
-	// we initialize our Users array
+	// we initialize our profile array
 	var profile Profile
 	// we unmarshal our byteArray which contains our
-	// xmlFiles content into 'users' which we defined above
+	// xmlFiles content into 'profile' which we defined above
 	xml.Unmarshal(byteValue, &profile)
 
-	// we iterate through every user within our users array and
-	// print out the user Type, their name, and their facebook url
-	// as just an example
 	fmt.Println(len(profile.Settings.Param))
 	Profile_Length := len(profile.Settings.Param)
 	profile.Name = jsonfile.Name
@@ -102,7 +105,11 @@ func WritingXML(FileName string, FILE string) {
 	_ = ioutil.WriteFile(FILE, file, 0644)
 }
 
-func Home(w http.ResponseWriter, r *http.Request) {
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// profile for parsing xml files and give request post in json file  and pass them to WritingXML() function
+func Profile(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	if r.Method == http.MethodGet {
 
@@ -150,17 +157,29 @@ func Home(w http.ResponseWriter, r *http.Request) {
 
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Function for Handling rouing
 func handleRequests() {
 	r := mux.NewRouter()
 
-	r.HandleFunc("/profiles", Home)
+	r.HandleFunc("/profiles", Profile)
 
 	http.Handle("/", r)
 	log.Fatal(http.ListenAndServe(":10000", nil))
 
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Main function
 func main() {
 
 	handleRequests()
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
