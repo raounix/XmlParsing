@@ -41,11 +41,11 @@ var filetest jsontest
 func TestProfile(t *testing.T) {
 
 	filetest.Name = "testin"
-	b := make(map[string]string)
-	b["context"] = "true"
-	b["rfc2833-pt"] = "5555"
-	b["sip-ip"] = "test"
-	filetest.Parameters = b
+	param := make(map[string]string)
+	param["context"] = "true"
+	param["rfc2833-pt"] = "5555"
+	param["sip-ip"] = "test"
+	filetest.Parameters = param
 	encode, _ := json.Marshal(filetest)
 
 	url := "http://127.0.0.1:10000/profiles"
