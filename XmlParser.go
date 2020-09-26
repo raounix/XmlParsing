@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"encoding/xml"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -12,6 +11,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// struct for give all xml tags for create or modify xml files
 type Profile struct {
 	XMLName  xml.Name `xml:"profile"`
 	Text     string   `xml:",chardata"`
@@ -37,13 +38,98 @@ type Profile struct {
 	} `xml:"settings"`
 }
 
-type Person struct {
-	Name       string   `json:"Name"`
-	Parameters []string `json:"parameters"`
+type ConfigFile struct { // Struct For Read location files from config.json
+	Location string `json:"location"`
 }
 
-func Home(w http.ResponseWriter, r *http.Request) {
+type JsonFile struct { // Struct For Open Json file gived from Post Request
+	Name       string            `json:"Name"`
+	Parameters map[string]string `json:"params"`
+}
+
+var jsonfile JsonFile        // for opening json file
+var Params map[string]string // give json file parameters for search in xml files
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// If File Exist or No
+
+func fileExists(filename string) bool {
+	info, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return !info.IsDir()
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//Write To XML File
+func WritingXML(FileName string, FILE string, w http.ResponseWriter) {
+	if FileName == "template.xml" {
+		File, err := os.OpenFile(FILE, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		defer File.Close()
+	}
+
+	xmlFile, _ := os.Open(FileName)
+
+	// defer the closing of our xmlFile so that we can parse it later on
+	defer xmlFile.Close()
+
+	// read our opened xmlFile as a byte array.
+	byteValue, _ := ioutil.ReadAll(xmlFile)
+
+	// we initialize our profile array
+	var profile Profile
+	// we unmarshal our byteArray which contains our
+	// xmlFiles content into 'profile' which we defined above
+	xml.Unmarshal(byteValue, &profile)
+
+	Profile_Length := len(profile.Settings.Param)
+	profile.Name = jsonfile.Name
+	for key, value := range Params {
+
+		for i := 0; i < Profile_Length; i++ {
+			if profile.Settings.Param[i].Name == key {
+				profile.Settings.Param[i].Value = value
+			}
+		}
+	}
+	file, _ := xml.MarshalIndent(profile, "", " ")
+
+	_ = ioutil.WriteFile(FILE, file, 0644)
+	w.Header().Set("Content-Type", "application/xml")
+	w.Write(file)
+
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Give Location files from config.json
+
+func ConfigLocation() string {
+	configfile, _ := os.Open("config.json")
+	byteconfig, _ := ioutil.ReadAll(configfile)
+	var configstruct ConfigFile
+	json.Unmarshal(byteconfig, &configstruct)
+	return configstruct.Location
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// profile for parsing xml files and give request post in json file  and pass them to WritingXML() function
+func Profiles(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
+	Location := ConfigLocation() + "/"
+
 	if r.Method == http.MethodGet {
 
 		// f, err := os.Open("/tmp/out.xml")
@@ -51,85 +137,70 @@ func Home(w http.ResponseWriter, r *http.Request) {
 		// 	panic(err)
 		// }
 
-		// x := r.Form.Get("test")
+		// x := r.Form.Get("template")
 
 	} else if r.Method == http.MethodPost {
 
-		fmt.Fprintf(w, "Post Request")
-		var Params map[string]string
+		// fmt.Fprintf(w, "Post Request")
 
 		Params = make(map[string]string)
-		for key, value := range r.Form {
-			Params[key] = value[0]
 
-		}
 		decoder := json.NewDecoder(r.Body)
-		var t Person
 
-		err := decoder.Decode(&t)
+		err := decoder.Decode(&jsonfile)
 		if err != nil {
 
 			panic(err)
 		}
-		log.Println(t.Parameters)
+		for key, value := range jsonfile.Parameters {
+			Params[key] = value
 
-		var FileName = t.Name + ".xml"
-
-		File, err := os.OpenFile(FileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-		if err != nil {
-			log.Fatal(err)
-		}
-		_ = File
-		xmlFile, err := os.Open("test.xml")
-		// if we os.Open returns an error then handle it
-		if err != nil {
-			fmt.Println(err)
 		}
 
-		fmt.Println("Successfully Opened test.xml")
-		// defer the closing of our xmlFile so that we can parse it later on
-		defer xmlFile.Close()
+		var FileName = jsonfile.Name + ".xml"
 
-		// read our opened xmlFile as a byte array.
-		byteValue, _ := ioutil.ReadAll(xmlFile)
+		// File, err := os.OpenFile(FileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		// if err != nil {
+		// 	log.Fatal(err)
+		// }
+		// _ = File
 
-		// we initialize our Users array
-		var profile Profile
-		// we unmarshal our byteArray which contains our
-		// xmlFiles content into 'users' which we defined above
-		xml.Unmarshal(byteValue, &profile)
+		FileName = Location + FileName
+		if fileExists(FileName) {
+			WritingXML(FileName, FileName, w)
 
-		// we iterate through every user within our users array and
-		// print out the user Type, their name, and their facebook url
-		// as just an example
-		Profile_Length := len(profile.Settings.Param)
-		profile.Name = t.Name
-		for key, value := range Params {
+		} else {
+			WritingXML("template.xml", FileName, w)
 
-			for i := 0; i < Profile_Length; i++ {
-				if profile.Settings.Param[i].Name == key {
-					profile.Settings.Param[i].Value = value
-				}
-			}
 		}
-		file, _ := xml.MarshalIndent(profile, "", " ")
 
-		_ = ioutil.WriteFile(FileName, file, 0644)
 	}
 
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Function for Handling rouing
 func handleRequests() {
-	r := mux.NewRouter()
+	router := mux.NewRouter()
 
-	r.HandleFunc("/profiles", Home)
+	router.HandleFunc("/profiles", Profiles)
 
-	http.Handle("/", r)
+	http.Handle("/", router)
 	log.Fatal(http.ListenAndServe(":10000", nil))
 
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Main function
 func main() {
 
 	handleRequests()
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
