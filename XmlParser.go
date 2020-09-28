@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"encoding/xml"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -76,7 +77,7 @@ func WritingXML(FileName string, FILE string, w http.ResponseWriter) {
 
 		defer File.Close()
 	}
-
+	fmt.Printf(FILE)
 	xmlFile, _ := os.Open(FileName)
 
 	// defer the closing of our xmlFile so that we can parse it later on
@@ -112,6 +113,47 @@ func WritingXML(FileName string, FILE string, w http.ResponseWriter) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+func ReadingXML(w http.ResponseWriter, r *http.Request, Location string) {
+	params, ok := r.URL.Query()["name"]
+
+	if !ok || len(params[0]) < 1 {
+		fmt.Fprintf(w, "You Should Pass One Parameter named by 'name' ")
+
+	} else {
+
+		// Query()["key"] will return an array of items,
+		// we only want the single item.
+		param := params[0]
+		FileName := Location + param + ".xml"
+		exist_or_no := fileExists(FileName)
+		if exist_or_no == true {
+			xmlFile, _ := os.Open(FileName)
+
+			// defer the closing of our xmlFile so that we can parse it later on
+			defer xmlFile.Close()
+
+			byteValue, _ := ioutil.ReadAll(xmlFile)
+
+			// we initialize our profile array
+			var profile Profile
+			// we unmarshal our byteArray which contains our
+			// xmlFiles content into 'profile' which we defined above
+			xml.Unmarshal(byteValue, &profile)
+
+			file, _ := xml.MarshalIndent(profile, "", " ")
+
+			w.Header().Set("Content-Type", "application/xml")
+			w.Write(file)
+		} else {
+			fmt.Fprintf(w, "File not Exist")
+		}
+	}
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Give Location files from config.json
 
 func ConfigLocation() string {
@@ -132,6 +174,7 @@ func Profiles(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == http.MethodGet {
 
+		ReadingXML(w, r, Location)
 		// f, err := os.Open("/tmp/out.xml")
 		// if err != nil {
 		// 	panic(err)
@@ -189,7 +232,7 @@ func handleRequests() {
 	router.HandleFunc("/profiles", Profiles)
 
 	http.Handle("/", router)
-	log.Fatal(http.ListenAndServe(":10000", nil))
+	log.Fatal(http.ListenAndServe("0.0.0.0:10000", nil))
 
 }
 
