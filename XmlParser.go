@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"encoding/xml"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -77,7 +76,7 @@ func WritingXML(FileName string, FILE string, w http.ResponseWriter) {
 
 		defer File.Close()
 	}
-	fmt.Printf(FILE)
+	
 	xmlFile, _ := os.Open(FileName)
 
 	// defer the closing of our xmlFile so that we can parse it later on
