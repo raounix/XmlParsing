@@ -104,8 +104,9 @@ func WritingXML(FileName string, FILE string, w http.ResponseWriter) {
 	file, _ := xml.MarshalIndent(profile, "", " ")
 
 	_ = ioutil.WriteFile(FILE, file, 0644)
-	w.Header().Set("Content-Type", "application/xml")
-	w.Write(file)
+    w.Write([]byte("OK"))
+// 	w.Header().Set("Content-Type", "application/xml")
+// 	w.Write(file)
 
 }
 
