@@ -82,7 +82,8 @@ func PatchingXml(FileName string, FILE string, w http.ResponseWriter, jsonfile J
 
 		defer File.Close()
 	}
-	TemplateFile, _ := os.Open("template.xml")
+
+	TemplateFile, _ := os.Open(FileName)
 	defer TemplateFile.Close()
 	xmlFile, _ := os.Open(FileName)
 
@@ -92,6 +93,7 @@ func PatchingXml(FileName string, FILE string, w http.ResponseWriter, jsonfile J
 	// read our opened xmlFile as a byte array.
 	XmlByte, _ := ioutil.ReadAll(xmlFile)
 	TemplateByte, _ := ioutil.ReadAll(TemplateFile)
+
 	// we initialize our profile array
 	var profile Profile
 	var template Profile
@@ -123,9 +125,6 @@ func PatchingXml(FileName string, FILE string, w http.ResponseWriter, jsonfile J
 				template.Settings.Param[i].Value = value
 				delete(Params, key)
 			}
-			// else {
-
-			// }
 
 		}
 	}
@@ -141,7 +140,6 @@ func PatchingXml(FileName string, FILE string, w http.ResponseWriter, jsonfile J
 
 	}
 
-	// _ = append(profile.Settings.Param, Params)
 	file, _ := xml.MarshalIndent(template, "", " ")
 
 	_ = ioutil.WriteFile(FILE, file, 0644)
@@ -188,8 +186,6 @@ func CreateOrEditXml(FileName string, FILE string, w http.ResponseWriter, jsonfi
 
 	template.Name = jsonfile.Name
 
-	// counter := 0
-
 	for key, value := range Params {
 
 		for i := 0; i < Template_Length; i++ {
@@ -197,9 +193,6 @@ func CreateOrEditXml(FileName string, FILE string, w http.ResponseWriter, jsonfi
 				template.Settings.Param[i].Value = value
 				delete(Params, key)
 			}
-			// else {
-
-			// }
 
 		}
 	}
@@ -215,7 +208,6 @@ func CreateOrEditXml(FileName string, FILE string, w http.ResponseWriter, jsonfi
 
 	}
 
-	// _ = append(profile.Settings.Param, Params)
 	file, _ := xml.MarshalIndent(template, "", " ")
 
 	_ = ioutil.WriteFile(FILE, file, 0644)
@@ -264,6 +256,71 @@ func ReadingXML(w http.ResponseWriter, r *http.Request, Location string) {
 	}
 }
 
+// func DeleteParams(FileName string, FILE string, w http.ResponseWriter, jsonfile JsonFile) {
+
+// 	TemplateFile, _ := os.Open("template.xml")
+// 	defer TemplateFile.Close()
+
+// 	xmlFile, _ := os.Open(FileName)
+// 	defer xmlFile.Close()
+
+// 	// read our opened xmlFile as a byte array.
+// 	XmlByte, _ := ioutil.ReadAll(xmlFile)
+// 	TemplateByte, _ := ioutil.ReadAll(TemplateFile)
+
+// 	// we initialize our profile array
+// 	var profile Profile
+// 	var template Profile
+
+// 	// we unmarshal our byteArray which contains our
+// 	// xmlFiles content into 'profile' which we defined above
+// 	xml.Unmarshal(XmlByte, &profile)
+// 	xml.Unmarshal(TemplateByte, &template)
+
+// 	Template_Length := len(template.Settings.Param)
+// 	Profile_Length := len(profile.Settings.Param)
+
+// 	for key, value := range Params {
+// 		for i := 0; i < Template_Length; i++ {
+// 			if template.Settings.Param[i].Name == key {
+// 				delete(Params, key)
+
+// 			}
+// 		}
+
+// 	}
+
+// 	template.Name = jsonfile.Name
+
+// 	for key, value := range Params {
+
+// 		for i := 0; i < Template_Length; i++ {
+// 			if template.Settings.Param[i].Name == key {
+// 				template.Settings.Param[i].Value = value
+// 				delete(Params, key)
+// 			}
+
+// 		}
+// 	}
+
+// 	var app Appending
+// 	for key, value := range Params {
+
+// 		app.Name = key
+// 		app.Value = value
+
+// 		template.Settings.Param = append(template.Settings.Param, app)
+// 		delete(Params, key)
+
+// 	}
+
+// 	file, _ := xml.MarshalIndent(template, "", " ")
+
+// 	_ = ioutil.WriteFile(FILE, file, 0644)
+// 	w.Write([]byte("OK"))
+
+// }
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -290,12 +347,6 @@ func PatchRequestHandling(jsonfile JsonFile, Location string, w http.ResponseWri
 
 	var FileName = jsonfile.Name + ".xml"
 
-	// File, err := os.OpenFile(FileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// _ = File
-
 	FileName = Location + FileName
 	if fileExists(FileName) {
 		PatchingXml(FileName, FileName, w, jsonfile)
@@ -320,12 +371,6 @@ func PostRequestHandling(jsonfile JsonFile, Location string, w http.ResponseWrit
 
 	var FileName = jsonfile.Name + ".xml"
 
-	// File, err := os.OpenFile(FileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// _ = File
-
 	FileName = Location + FileName
 	if fileExists(FileName) {
 		CreateOrEditXml(FileName, FileName, w, jsonfile)
@@ -339,7 +384,33 @@ func PostRequestHandling(jsonfile JsonFile, Location string, w http.ResponseWrit
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// profile for parsing xml files and give request Delete in json file
+
+// func DeleteRequestHandling(jsonfile JsonFile, Location string, w http.ResponseWriter) {
+
+// 	for key, value := range jsonfile.Parameters {
+// 		Params[key] = value
+
+// 	}
+
+// 	var FileName = jsonfile.Name + ".xml"
+
+// 	FileName = Location + FileName
+// 	if fileExists(FileName) {
+// 		DeleteParams(FileName, FileName, w, jsonfile)
+
+// 	} else {
+// 		fmt.Fprintf(w, "File not Exist !!")
+
+// 	}
+
+// }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // profile for parsing xml files and give request post in json file  and pass them to functions
+
 func Profiles(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	Location := ConfigLocation() + "/"
@@ -348,9 +419,8 @@ func Profiles(w http.ResponseWriter, r *http.Request) {
 
 		ReadingXML(w, r, Location)
 
-	} else if r.Method == http.MethodPatch {
+	} else if r.Method == http.MethodPatch { // Patch Method for edit Files
 
-		// fmt.Fprintf(w, "Post Request")
 		var jsonfile JsonFile
 
 		Params = make(map[string]string)
@@ -365,7 +435,7 @@ func Profiles(w http.ResponseWriter, r *http.Request) {
 
 		PatchRequestHandling(jsonfile, Location, w)
 
-	} else if r.Method == http.MethodPost {
+	} else if r.Method == http.MethodPost { // Post Method for Create File
 
 		var jsonfile JsonFile
 
@@ -381,6 +451,21 @@ func Profiles(w http.ResponseWriter, r *http.Request) {
 
 		PostRequestHandling(jsonfile, Location, w)
 
+	} else if r.Method == http.MethodDelete { // Delete Method for Delete Parameters
+
+		var JsonFile JsonFile
+
+		Params = make(map[string]string)
+
+		decoder := json.NewDecoder(r.Body)
+
+		err := decoder.Decode(&JsonFile)
+		if err != nil {
+
+			panic(err)
+		}
+		fmt.Fprintf(w, "not Allowed")
+		// DeleteRequestHandling(JsonFile, Location, w)
 	}
 
 }
