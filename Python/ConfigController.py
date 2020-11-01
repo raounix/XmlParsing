@@ -27,15 +27,8 @@ class main():
 
 
 
-
-
-
     # def Reading(self):
-    #     with open('/home/chakavak/Desktop/XmlParsing/Python/template.xml') as file:
-    #         xml = file.read()
-    #     root = objectify.fromstring(xml)
-    #     for i in root.settings.param:
-    #         print(i.get("name"))
+
 
        
         # # how to extract element data
