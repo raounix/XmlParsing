@@ -1,7 +1,6 @@
 from flask import Flask ,current_app, Response,request
 from ConfigController import main
 from XmlParser import XmlParsing
-from django.http import HttpResponse
 app = Flask(__name__)
 
 file_controller = main()
@@ -39,7 +38,7 @@ def CreateConfigFile():
                 file.write(XmlCreated)  
             return Response("ok",status=200)
         else:
-            return Response("not allowed . send other profile names",status=405)
+            return Response("not allowed . send other profile names",status=403)
     except:
         return Response("not found",status=200)
 
