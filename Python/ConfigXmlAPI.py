@@ -32,14 +32,16 @@ def CreateConfigFile():
         json_file=request.json
         parameter_data = json_file['params']
         file_name =json_file['profile_name']
-        XmlCreated=xml_config_controller.CreateXmlFile(file_name,parameter_data)
-        print(XmlCreated)
-        with open(file_controller.FullPath(json_file['profile_name']), "wb") as file: 
-            file.write(XmlCreated)  
-        return Response("ok",status=200)
+        if(file_name!="template"):
+            XmlCreated=xml_config_controller.CreateXmlFile(file_name,parameter_data)
+            
+            with open(file_controller.FullPath(json_file['profile_name']), "wb") as file: 
+                file.write(XmlCreated)  
+            return Response("ok",status=200)
+        else:
+            return Response("not allowed . send other profile names",status=405)
     except:
         return Response("not found",status=200)
-
 
 # @app.route('/profile',methods=['DELETE'])
 # def Delete():
