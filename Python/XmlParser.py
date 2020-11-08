@@ -19,7 +19,7 @@ class XmlParsing():
                 
         parameters=params
         root = objectify.fromstring(xml_template)
-        root.set("name","Raouf")
+        root.set("name",file_name)
         counter=0
         
         ## Set Exist Parameters 
